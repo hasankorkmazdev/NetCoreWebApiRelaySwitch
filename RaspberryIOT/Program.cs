@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Device.Gpio;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,21 +14,27 @@ namespace RaspberryIOT
 {
     public class Program
     {
-        public static List<int>   usedPins = new List<int>() { 2, 3, 4, 17 };
         public static void Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
-
+            IConfigurationRoot _config = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetParent(AppContext.BaseDirectory).FullName)
+    .AddJsonFile("appsettings.json", false)
+    .Build();
             using (var serviceScope = host.Services.CreateScope())
             {
                 var services = serviceScope.ServiceProvider;
+                var configuration = services.GetRequiredService<IConfiguration>();
+                List<int> pins = _config.GetSection("UsedPins:Pins").Get<List<int>>();
+
                 var gpioController = services.GetRequiredService<GpioController>();
-                foreach (var item in usedPins)
+                foreach (var item in pins)
                 {
                     gpioController.OpenPin(item, PinMode.Output);
                     gpioController.Write(item, PinValue.Low);
                 }
             }
+
             host.Run();
         }
 
@@ -35,7 +42,7 @@ namespace RaspberryIOT
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
-                    webBuilder.UseStartup<Startup>();
+                    webBuilder.UseStartup<Startup>().UseUrls("http://*:8000");
                 });
     }
 }

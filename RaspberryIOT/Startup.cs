@@ -51,7 +51,8 @@ namespace RaspberryIOT
                 {
                     var services = serviceScope.ServiceProvider;
                     var gpioController = services.GetRequiredService<GpioController>();
-                    foreach (var item in Program.usedPins)
+                    List<int> pins = Configuration.GetSection("UsedPins:Pins").Get<List<int>>();
+                    foreach (var item in pins)
                     {
                         gpioController.ClosePin(item);
                     }

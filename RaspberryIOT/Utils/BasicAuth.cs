@@ -7,12 +7,12 @@ namespace RaspberryIOT.Utils
 {
     public class BasicAuth
     {
-        private  List<Guid> Authorized { get; set; } = new List<Guid>();
+        public  List<Guid> Authorized { get; set; } = new List<Guid>();
 
         public  bool isAuth(Guid key)
         {
             var q=Authorized.Where(x => x == key).FirstOrDefault();
-            if (q==null)
+            if (q==Guid.Empty)
             {
                 return false;
             }
@@ -34,7 +34,7 @@ namespace RaspberryIOT.Utils
 
            
             var q = Authorized.Where(x => x == key).FirstOrDefault();
-            if (q==null)
+            if (q==Guid.Empty)
             {
                 return true;
             }

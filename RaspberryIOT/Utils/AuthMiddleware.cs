@@ -18,8 +18,9 @@ namespace RaspberryIOT.Utils
         {
             _next = next;
         }
-        public async Task Invoke(HttpContext httpContext)
+        public async Task Invoke(HttpContext httpContext,BasicAuth auther)
         {
+            
             /**************************/
             /**                      **/
             /**                      **/
@@ -28,6 +29,7 @@ namespace RaspberryIOT.Utils
             /**                      **/
             /**                      **/
             /**************************/
+            
             var controllerActionDescriptor = httpContext.GetEndpoint();
             if (controllerActionDescriptor==null)
             {
@@ -47,20 +49,39 @@ namespace RaspberryIOT.Utils
                     await _next(httpContext);
 
                 }
-                if (authToken.Key == null)
-                {
-                    //Diğer Noktalara Geliyorsa ve tokeni yoksa  Engelle 
-
-                    var json = JsonConvert.SerializeObject(new ApiResponse() { Status = false, Code = 203, Message = "Oturum Açmanız Gerekiyor." });
-                    await httpContext.Response.WriteAsync(json);
-
-                }
                 else
                 {
-                    //Diğer Noktalara Geliyorsa ve tokeni varsa  bırak geçsin 
+                    if (authToken.Key == null)
+                    {
+                        //Diğer Noktalara Geliyorsa ve tokeni yoksa  Engelle 
 
-                    await _next(httpContext);
+                        var json = JsonConvert.SerializeObject(new ApiResponse() { Status = false, Code = 203, Message = "Oturum Açmanız Gerekiyor." });
+                        await httpContext.Response.WriteAsync(json);
+
+                    }
+                    else
+                    {
+                        //Diğer Noktalara Geliyorsa ve tokeni varsa  Yetkisi varmı bak varsa  geçsin 
+                        Console.WriteLine("Token" + authToken);
+                        Console.WriteLine("Guid Token"+Guid.Parse(authToken.Value));
+                        foreach (var item in auther.Authorized)
+                        {
+                            Console.WriteLine("TokenList" + item);
+
+                        }
+                        if (!auther.isAuth(Guid.Parse(authToken.Value)))
+                        {
+                            var json = JsonConvert.SerializeObject(new ApiResponse() { Status = false, Code = 203, Message = "Api Key Geçersiz. Yeniden Oturum Açmanız Gerekiyor." });
+                            await httpContext.Response.WriteAsync(json);
+                        }
+                        else
+                        {
+                            await _next(httpContext);
+                        }
+
+                    }
                 }
+               
             }
             
 
